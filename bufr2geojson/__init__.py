@@ -591,6 +591,7 @@ class BUFRParser:
         except Exception as e:
             LOGGER.error("Unable to read table version number")
             LOGGER.error(e)
+            codes_release(bufr_handle)
             raise e
 
         # get number of subsets
@@ -611,6 +612,7 @@ class BUFRParser:
                     LOGGER.warning("subsetNumber not found, continuing")
                     continue
                 LOGGER.error(f"Error reading {header}")
+                codes_release(bufr_handle)
                 raise e
 
         characteristic_date = headers["typicalDate"]
@@ -620,6 +622,7 @@ class BUFRParser:
             sequence = codes_get_array(bufr_handle, UNEXPANDED_DESCRIPTORS[0])
         except Exception as e:
             LOGGER.error(f"Error reading {UNEXPANDED_DESCRIPTORS}")
+            codes_release(bufr_handle)
             raise e
 
         sequence = sequence.tolist()
@@ -802,6 +805,7 @@ def transform(data: bytes, serialize: bool = False) -> Iterator[dict]:
             LOGGER.error("Error unpacking message")
             LOGGER.error(e)
             if FAIL_ON_ERROR:
+                codes_release(bufr_handle)
                 raise e
             error = True
 
@@ -831,6 +835,8 @@ def transform(data: bytes, serialize: bool = False) -> Iterator[dict]:
                     LOGGER.error("Error parsing BUFR to GeoJSON, no data written")  # noqa
                     LOGGER.error(e)
                     if FAIL_ON_ERROR:
+                        codes_release(bufr_handle)
+                        codes_release(single_subset)
                         raise e
                     data = {}
                 del parser
